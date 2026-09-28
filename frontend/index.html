@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI + IoT Dynamic Ambulance Corridor System</title>
+  <meta name="description" content="AI Video Fall Detection, 10-Second Recovery Monitoring, Shortest Path Ambulance Routing, and Dynamic Green Corridor IoT System.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <div class="brand-logo">
+        <span class="cross-icon">+</span>
+      </div>
+      <div>
+        <h1 class="nav-title">AI + IoT Dynamic Ambulance Corridor</h1>
+        <p class="nav-subtitle">Emergency Response & Intelligent Traffic Signal Priority System</p>
+      </div>
+    </div>
+    <div class="nav-status-group">
+      <div class="status-badge" id="system-status-badge">
+        <span class="status-dot green"></span>
+        <span id="system-status-text">SYSTEM OPERATIONAL</span>
+      </div>
+      <div class="status-badge" id="mqtt-status-badge">
+        <span class="status-dot green"></span>
+        <span>MQTT / ESP32 LINKED</span>
+      </div>
+      <div class="time-display" id="live-clock">--:--:--</div>
+    </div>
+  </header>
+
+  <!-- Medical Disclaimer Banner -->
+  <div class="disclaimer-banner">
+    <div class="disclaimer-icon">⚠️</div>
+    <div class="disclaimer-content">
+      <strong>Operational Emergency Prototype Notice:</strong> The system detects falls and prolonged 10-second non-recovery as an operational response trigger. It does <strong>not</strong> medically diagnose heart attacks or health conditions.
+    </div>
+  </div>
+
+  <!-- Main Container Layout -->
+  <main class="dashboard-grid">
+    
+    <!-- Left Column: Video & Fall AI Detection -->
+    <section class="card video-section">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span class="icon">📹</span>
+          <h2>AI Fall Detection & 10s Recovery Monitor</h2>
+        </div>
+        <span class="badge" id="ai-model-badge">YOLOv8s • Recorded Video Only</span>
+      </div>
+      
+      <!-- Video / Simulation Visualizer -->
+      <div class="video-container" id="video-wrapper">
+        <canvas id="videoCanvas" width="640" height="380"></canvas>
+        <video id="uploadedVideoPlayer" controls style="display: none; width: 100%; height: 100%; object-fit: contain;"></video>
+        <div class="video-hud-overlay" id="hud-overlay">
+          <div class="hud-top">
+            <span class="hud-tag" id="hud-mode-tag">INPUT: RECORDED VIDEO</span>
+            <span class="hud-tag" id="hud-fps-tag">FPS: 30.0</span>
+          </div>
+          <div class="hud-emergency-alert" id="hud-emergency-alert">
+            <span class="pulse-alert">🚨</span> SUSPECTED SERIOUS MEDICAL EMERGENCY
+          </div>
+          <div class="hud-bottom">
+            <div class="hud-stat">
+              <span class="label">FALL STATE</span>
+              <span class="val" id="hud-fall-state">NORMAL</span>
+            </div>
+            <div class="hud-stat">
+              <span class="label">CONFIDENCE</span>
+              <span class="val" id="hud-fall-conf">0.00</span>
+            </div>
+            <div class="hud-stat">
+              <span class="label">POSTURE</span>
+              <span class="val" id="hud-posture">UPRIGHT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload Video Drop Box -->
+      <div class="upload-video-box">
+        <div class="upload-controls">
+          <label class="btn btn-secondary file-upload-btn" for="videoFileInput">
+            <span class="btn-icon">📁</span> Select Video (.mp4)
+          </label>
+          <input type="file" id="videoFileInput" accept=".mp4,.avi,.mov,.mkv" style="display: none;">
+          <span class="selected-filename" id="selectedFileName">No file selected</span>
+        </div>
+        <button class="btn btn-primary" id="btn-upload-analyze">
+          <span class="btn-icon">⚡</span> Upload & Run AI
+        </button>
+      </div>
+
+      <!-- 10-Second Recovery Timer Gauge -->
+      <div class="recovery-timer-card" id="recovery-timer-card">
+        <div class="timer-header">
+          <div>
+            <span class="timer-title">10-Second Non-Recovery Monitor</span>
+            <p class="timer-desc" id="timer-desc">Waiting for confirmed fall event...</p>
+          </div>
+          <div class="timer-digits" id="timer-digits">0.0s / 10.0s</div>
+        </div>
+        
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="timer-progress-fill"></div>
+          <div class="progress-marker marker-25"></div>
+          <div class="progress-marker marker-50"></div>
+          <div class="progress-marker marker-75"></div>
+          <div class="progress-marker marker-100"></div>
+        </div>
+
+        <div class="timer-steps-indicator">
+          <span class="step-badge active" id="step-detect">1. Fall Detection</span>
+          <span class="step-badge" id="step-validate">2. 5-Frame Validation</span>
+          <span class="step-badge" id="step-monitor">3. 10s Monitoring</span>
+          <span class="step-badge" id="step-trigger">4. Emergency Dispatch</span>
+        </div>
+      </div>
+
+      <!-- Video Controls & Test Action Buttons -->
+      <div class="action-button-group">
+        <button class="btn btn-primary" id="btn-trigger-emergency">
+          <span class="btn-icon">⚡</span> Simulate Fall + 10s Non-Recovery
+        </button>
+        <button class="btn btn-warning" id="btn-trigger-recovery">
+          <span class="btn-icon">🚶</span> Simulate Fall + Quick Recovery (&lt;10s)
+        </button>
+        <button class="btn btn-secondary" id="btn-run-video-inference">
+          <span class="btn-icon">▶️</span> Process Demo Test Video
+        </button>
+        <button class="btn btn-ghost" id="btn-reset-all">
+          <span class="btn-icon">🔄</span> Reset All State
+        </button>
+      </div>
+    </section>
+
+    <!-- Center Column: Dynamic Green Corridor & Shortest Route Map -->
+    <section class="card map-section">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span class="icon">🗺️</span>
+          <h2>Dynamic Green Corridor & Route Network</h2>
+        </div>
+        <div class="route-algo-selector">
+          <label for="algoSelect">Algorithm:</label>
+          <select id="algoSelect">
+            <option value="astar" selected>A* Shortest Path</option>
+            <option value="dijkstra">Dijkstra's Algorithm</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Road Network Interactive Canvas Map -->
+      <div class="map-container">
+        <canvas id="roadNetworkCanvas" width="600" height="420"></canvas>
+        
+        <div class="map-legend">
+          <div class="legend-item"><span class="dot dot-start"></span> Incident / Start (A)</div>
+          <div class="legend-item"><span class="dot dot-corridor"></span> Dynamic Green Wave</div>
+          <div class="legend-item"><span class="dot dot-priority"></span> Priority Junction</div>
+          <div class="legend-item"><span class="dot dot-hospital"></span> Apex Hospital</div>
+        </div>
+      </div>
+
+      <!-- Ambulance Telemetry & Simulation Controls -->
+      <div class="telemetry-bar">
+        <div class="telemetry-item">
+          <span class="t-label">AMBULANCE</span>
+          <span class="t-val highlight" id="amb-id">AMB_01</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="t-label">STATUS</span>
+          <span class="t-val status-badge-pill" id="amb-status">IDLE</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="t-label">POSITION</span>
+          <span class="t-val" id="amb-pos">Node A (Start)</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="t-label">UPCOMING JUNCTION</span>
+          <span class="t-val green-glow" id="amb-upcoming">J01 (Priority)</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="t-label">SPEED / ETA</span>
+          <span class="t-val" id="amb-speed">0 km/h • --s</span>
+        </div>
+      </div>
+
+      <!-- Corridor Step Controls -->
+      <div class="simulation-controls">
+        <button class="btn btn-success" id="btn-auto-simulate">
+          <span class="btn-icon">🚀</span> Auto-Run Corridor Simulation
+        </button>
+        <button class="btn btn-outline" id="btn-step-simulate">
+          <span class="btn-icon">⏭️</span> Step Next Junction
+        </button>
+      </div>
+    </section>
+
+    <!-- Right Column: IoT Traffic Junctions & Live Event Stream -->
+    <section class="card iot-section">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span class="icon">🚦</span>
+          <h2>IoT ESP32 Traffic Junctions</h2>
+        </div>
+        <button class="btn btn-small" id="btn-reset-signals">Reset Signals</button>
+      </div>
+
+      <!-- Junctions Grid -->
+      <div class="junctions-grid" id="junctions-list">
+        <!-- Rendered dynamically via JS -->
+      </div>
+
+      <!-- Live Event Activity Log -->
+      <div class="card-header log-header">
+        <div class="card-title-group">
+          <span class="icon">📜</span>
+          <h3>Live Telemetry & Activity Stream</h3>
+        </div>
+        <button class="btn-link" id="btn-clear-logs">Clear</button>
+      </div>
+
+      <div class="event-logs-container" id="event-logs">
+        <div class="log-entry log-system">
+          <span class="log-time">[System]</span>
+          <span class="log-msg">AI + IoT Dynamic Corridor System initialized. In-memory state active.</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
