@@ -273,4 +273,5 @@ For physical deployment with traffic lights and emergency vehicles:
 - 2x 3-channel Traffic Light LED Modules (Red, Yellow, Green 5V/12V with relay driver)
 - 1x GPS Module (NEO-6M / NEO-8M) for ambulance GPS tracking
 - 1x 4G/LTE / Wi-Fi IoT Gateway on ambulance
-- MQTT Broker (Eclipse Mosquitto / EMQX deployed on cloud or edge server)
+- MQTT Broker (Eclipse Mosquitto / EMQX deployed on cloud or edge server).
+- 
